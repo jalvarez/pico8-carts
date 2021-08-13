@@ -1,5 +1,5 @@
 pico-8 cartridge // http://www.pico-8.com
-version 27
+version 29
 __lua__
 function _init()
  t = 0
@@ -19,13 +19,32 @@ function _init()
 	balas = {}
 	virus = {}
  explosiones = {}
- 	
-	for i = 1,5 do
+ globulos = {}
+ 
+ for i=1,128 do
+ 	add(globulos,
+ 	    { x = rnd(128),
+ 	      y = rnd(128),
+ 	      s = rnd(2) + 1
+ 	    })
+ end 
+ 
+	
+	empezar()
+end
+
+function respaunear()
+ local n = flr(rnd(6)) + 2
+	for i = 1,n do
+	 local d = -1
+	 if rnd(1) < 0.5 then d = 1 end
+	 
 	 local v = { s = 17,
 													 mx = 10 + 20 * i,
-														my = 30 - 5 * i,
+														my = -20 - 5 * i,
 														x = -32,
 														y = -32,
+														d = d,
 														r = 30,
 														box = {
 															x1 = 0,
@@ -35,8 +54,6 @@ function _init()
 												}
 		add(virus, v)
 	end
-	
-	empezar()
 end
 
 function empezar()
@@ -111,6 +128,10 @@ function update_juego()
  	nave.s = 2
  end
  
+ if #virus <= 0 then
+ 	respaunear()
+ end
+ 
  for b in all(balas) do
  	b.x += b.dx
  	b.y += b.dy
@@ -129,7 +150,8 @@ function update_juego()
  end
  
  for v in all(virus) do
- 	v.x = v.r * sin(t/50) + v.mx
+  v.my += 1.3
+ 	v.x = v.r * sin(v.d * t/50) + v.mx
  	v.y = v.r * cos(t/50) + v.my
  	
  	if ha_chocado(v,nave) and 
@@ -139,6 +161,18 @@ function update_juego()
  					if (nave.h < 1) then
  						game_over()
  					end
+ 	end
+ 	
+ 	if v.y > 150 then
+ 		del(virus, v)
+ 	end
+ end
+ 
+ for gb in all(globulos) do
+ 	gb.y += gb.s
+ 	if gb.y >= 128 then
+ 		gb.y = 0
+ 		gb.x = rnd(128)
  	end
  end
  
@@ -158,6 +192,11 @@ end
 
 function draw_juego()
  cls()
+ 
+ for gb in all(globulos) do
+ 	pset(gb.x, gb.y, 15)
+ end
+ 
  print(nave.p)
  
  if not nave.imm or t%8 > 4 then
@@ -188,10 +227,14 @@ end
 function draw_game_over()
 	cls()
 	print("game over", 50, 50, 4)
+	print("score = " .. nave.p,
+					  50, 70, 12) 
 end
 
 function update_game_over()
-	
+	if (btnp(5)) then 
+		_init()
+	end	
 end
 __gfx__
 00000000000060000000600000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
